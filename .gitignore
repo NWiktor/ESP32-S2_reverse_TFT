@@ -1,3 +1,7 @@
+# Secrets file
+esp32-s2-rev-tft/secrets.py
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
