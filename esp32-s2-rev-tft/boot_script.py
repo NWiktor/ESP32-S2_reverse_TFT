@@ -1,16 +1,19 @@
+""" This module contains functions for booting (runs only once during booting). """
+
 import os
-import time, rtc
+import time
+from secrets import secrets
+import wifi, ssl, socketpool
+import rtc
 import board
 import terminalio
 from adafruit_display_text import bitmap_label
-
-import wifi, ssl, socketpool
 import adafruit_requests
-from secrets import secrets
+
 
 
 def main():
-    # Update this to change the size of the text displayed. Must be a whole number.
+    """ Shows system data and hello message for 5 seconds. """
     mach_name = os.uname().machine
     sys_name = os.uname().sysname
 
