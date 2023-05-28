@@ -14,7 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Check this if works properly:
+.lib/
 lib64/
 parts/
 sdist/
