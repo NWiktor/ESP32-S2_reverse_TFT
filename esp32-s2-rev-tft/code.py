@@ -1,18 +1,16 @@
 # SPDX-FileCopyrightText: 2021 Tim C for Adafruit Industries
 # SPDX-License-Identifier: MIT
 """
-CircuitPython simple text display demo
+CircuitPython xxxxxxxxxx
 """
 
 import os
 import time
 import board
-import neopixel
 import terminalio
 import digitalio
-from rainbowio import colorwheel
-import adafruit_datetime as adt
 from adafruit_display_text import bitmap_label
+import adafruit_bmp3xx
 
 import boot_script
 
@@ -21,10 +19,26 @@ import boot_script
 # 0xFFBD33
 # 0xFF5733
 
-def rainbow(delay):
-    for color_value in range(255):
-        pixel[0] = colorwheel(color_value)
-        time.sleep(delay)
+
+def check_buttons():
+
+    # print(dir(board))
+    # time.sleep(2)
+    # print("----")
+    print(button_d0.value)
+    print(button_d1.value)
+    print(button_d2.value)
+    print(BUTT_D0)
+    print(BUTT_D1)
+    print(BUTT_D2)
+
+
+def get_bmp():
+    print("Pressure: {:6.1f}".format(bmp.pressure))
+    print("Temperature: {:5.2f}".format(bmp.temperature))
+    p = "{:6.1f}".format(bmp.pressure)
+    t = "{:5.2f}".format(bmp.temperature)
+    return p, t, 0
 
 
 def get_disk():
@@ -36,11 +50,14 @@ def get_disk():
 
 def main():
     # Second text
-    tt = time.localtime()
-    cur_date = f"{tt[0]}-{tt[1]:02d}-{tt[2]:02d}" #time.strftime("%Y-%m-%d", time.localtime())
-    cur_time = f"{tt[3]:02d}:{tt[4]:02d}:{tt[5]:02d}" #time.strftime("%H:%M:%S", time.localtime())
+    loc_t = time.localtime()
+    cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
+    cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     mem = get_disk()
+    # pres, temp, alt = get_bmp()
 
+    # Disk: {mem} MB
+    # Pressure: {pres} hPa\nTemperature: {temp} °C
     text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB"
     text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x75FF33)
     text_area.x = 10
@@ -50,41 +67,31 @@ def main():
 
 if __name__ == '__main__':
 
+    BUTT_D0 = False
+    BUTT_D1 = False
+    BUTT_D2 = False
+
+
+    # Initialize LED
+    led = digitalio.DigitalInOut(board.LED)
+    led.direction = digitalio.Direction.OUTPUT
+
+    button_d0 = digitalio.DigitalInOut(board.D0)
+    button_d0.switch_to_input(pull=digitalio.Pull.UP)
+    button_d1 = digitalio.DigitalInOut(board.D1)
+    button_d1.switch_to_input(pull=digitalio.Pull.UP)
+    button_d2 = digitalio.DigitalInOut(board.D2)
+    button_d2.switch_to_input(pull=digitalio.Pull.UP)
+
+    # i2c = board.I2C()
+    # bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
+    # print("Set sea level pressure.")
+    # bmp.sea_level_pressure = 1013.25
+
     # Set RTC and show welcome screen
     boot_script.set_rtc()
     boot_script.main()
 
-
-    # Initialize LED
-    # led = digitalio.DigitalInOut(board.LED)
-    # led.direction = digitalio.Direction.OUTPUT
-
-    # button = digitalio.DigitalInOut(board.BUTTON)
-    # button.switch_to_input(pull=digitalio.Pull.UP)
-
-    # pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
-    # pixel.brightness = 0.3
-
     while True:
+        # check_buttons()
         main()
-
-        # rainbow(0.02)
-
-        # pixel.fill((255, 0, 0))
-        # time.sleep(0.5)
-        # pixel.fill((0, 255, 0))
-        # time.sleep(0.5)
-        # pixel.fill((0, 0, 255))
-        # time.sleep(0.5)
-
-        # if not button.value:
-        #     BUTTON_PRESSED = True
-
-        # else:
-        #     BUTTON_PRESSED = False
-
-        # if BUTTON_PRESSED:
-        #     led.value = True
-        #     time.sleep(0.5)
-        #     led.value = False
-        #     time.sleep(0.5)
