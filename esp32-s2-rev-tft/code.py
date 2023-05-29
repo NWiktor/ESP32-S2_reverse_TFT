@@ -21,16 +21,28 @@ import boot_script
 
 
 def check_buttons():
-
-    # print(dir(board))
-    # time.sleep(2)
-    # print("----")
     print(button_d0.value)
     print(button_d1.value)
     print(button_d2.value)
-    print(BUTT_D0)
-    print(BUTT_D1)
-    print(BUTT_D2)
+    # print(BUTT_D0)
+    # print(BUTT_D1)
+    # print(BUTT_D2)
+
+
+def search():
+    while not i2c.try_lock():
+        pass
+
+    try:
+        while True:
+            print(
+                "I2C addresses found:",
+                [hex(device_address) for device_address in i2c.scan()],
+            )
+            time.sleep(2)
+
+    finally:  # unlock the i2c bus when ctrl-c'ing out of the loop
+        i2c.unlock()
 
 
 def get_bmp():
@@ -71,7 +83,6 @@ if __name__ == '__main__':
     BUTT_D1 = False
     BUTT_D2 = False
 
-
     # Initialize LED
     led = digitalio.DigitalInOut(board.LED)
     led.direction = digitalio.Direction.OUTPUT
@@ -79,19 +90,24 @@ if __name__ == '__main__':
     button_d0 = digitalio.DigitalInOut(board.D0)
     button_d0.switch_to_input(pull=digitalio.Pull.UP)
     button_d1 = digitalio.DigitalInOut(board.D1)
-    button_d1.switch_to_input(pull=digitalio.Pull.UP)
+    button_d1.switch_to_input(pull=digitalio.Pull.DOWN)
     button_d2 = digitalio.DigitalInOut(board.D2)
-    button_d2.switch_to_input(pull=digitalio.Pull.UP)
+    button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
 
+    # For sensor
     # i2c = board.I2C()
     # bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
     # print("Set sea level pressure.")
     # bmp.sea_level_pressure = 1013.25
+
+    # bmp.pressure_oversampling = 8
+    # bmp.temperature_oversampling = 2
 
     # Set RTC and show welcome screen
     boot_script.set_rtc()
     boot_script.main()
 
     while True:
-        # check_buttons()
+        check_buttons()
         main()
+        # search()
