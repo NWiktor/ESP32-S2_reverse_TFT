@@ -29,7 +29,7 @@ def check_buttons():
     # print(BUTT_D2)
 
 
-def search():
+def i2c_search():
     while not i2c.try_lock():
         pass
 
@@ -46,11 +46,11 @@ def search():
 
 
 def get_bmp():
-    print("Pressure: {:6.1f}".format(bmp.pressure))
-    print("Temperature: {:5.2f}".format(bmp.temperature))
-    p = "{:6.1f}".format(bmp.pressure)
-    t = "{:5.2f}".format(bmp.temperature)
-    return p, t, 0
+    """ Get data from BMP sensor. """
+    pres = "{:6.1f}".format(bmp.pressure)
+    temp = "{:5.2f}".format(bmp.temperature)
+    alt = "{:.2f}".format(bmp.altitude)
+    return pres, temp, alt
 
 
 def get_disk():
@@ -60,17 +60,28 @@ def get_disk():
     return f"{free:.2f}/{disk:.2f}"
 
 
-def main():
-    # Second text
+def show_system_stats():
+    """  """
     loc_t = time.localtime()
     cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
     cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     mem = get_disk()
-    # pres, temp, alt = get_bmp()
-
-    # Disk: {mem} MB
-    # Pressure: {pres} hPa\nTemperature: {temp} °C
+    
     text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB"
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x75FF33)
+    text_area.x = 10
+    text_area.y = 10
+    board.DISPLAY.show(text_area)
+
+
+def show_atm_stats():
+    """  """
+    loc_t = time.localtime()
+    # cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
+    cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
+    pres, temp, alt = get_bmp()
+
+    text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} °C\nAlt.: {alt} m"
     text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x75FF33)
     text_area.x = 10
     text_area.y = 10
@@ -95,11 +106,10 @@ if __name__ == '__main__':
     button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
 
     # For sensor
-    # i2c = board.I2C()
-    # bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
-    # print("Set sea level pressure.")
-    # bmp.sea_level_pressure = 1013.25
-
+    i2c = board.I2C()
+    bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
+    print("Set sea level pressure.")
+    bmp.sea_level_pressure = 1013.25
     # bmp.pressure_oversampling = 8
     # bmp.temperature_oversampling = 2
 
@@ -108,6 +118,5 @@ if __name__ == '__main__':
     boot_script.main()
 
     while True:
-        check_buttons()
-        main()
-        # search()
+        # check_buttons()
+        show_atm_stats()
