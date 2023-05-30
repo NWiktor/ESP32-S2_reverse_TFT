@@ -16,9 +16,11 @@ import adafruit_bmp3xx
 import soft_boot
 
 # Favorite colors
-# 0xDBFF33 -
-# 0xFFBD33 -
-# 0xFF5733 -
+# 0x75FF33 - lawn green
+# 0xDBFF33 - yellow
+# 0xFFBD33 - outrageous orange
+# 0xFF5733 - red
+# 0x3375FF - royal blue
 
 
 def check_buttons():
@@ -62,7 +64,7 @@ def show_system_stats():
     mem = get_disk()
 
     text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0xDBFF33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x3375FF)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
