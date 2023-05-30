@@ -4,6 +4,7 @@
 CircuitPython xxxxxxxxxx
 """
 
+# pylint: disable = import-error
 import os
 import time
 import board
@@ -12,48 +13,41 @@ import digitalio
 from adafruit_display_text import bitmap_label
 import adafruit_bmp3xx
 
-import boot_script
+import soft_boot
 
-# Favorit colors
-# 0xDBFF33
-# 0xFFBD33
-# 0xFF5733
+# Favorite colors
+# 0xDBFF33 -
+# 0xFFBD33 -
+# 0xFF5733 -
 
 
 def check_buttons():
-    print(button_d0.value)
-    print(button_d1.value)
-    print(button_d2.value)
-    # print(BUTT_D0)
-    # print(BUTT_D1)
-    # print(BUTT_D2)
+    """  """
+    global BUTT_D0, MODE
+    # print(button_d0.value)
+    # print(button_d1.value)
+    # print(button_d2.value)
 
+    if button_d0.value != BUTT_D0:
+        # BUTT_D0 = button_d0.value
+        MODE += 1
+        time.sleep(0.5)
 
-def i2c_search():
-    while not i2c.try_lock():
-        pass
+    if MODE >= 2:
+        MODE = 0
 
-    try:
-        while True:
-            print(
-                "I2C addresses found:",
-                [hex(device_address) for device_address in i2c.scan()],
-            )
-            time.sleep(2)
-
-    finally:  # unlock the i2c bus when ctrl-c'ing out of the loop
-        i2c.unlock()
 
 
 def get_bmp():
     """ Get data from BMP sensor. """
-    pres = "{:6.1f}".format(bmp.pressure)
-    temp = "{:5.2f}".format(bmp.temperature)
-    alt = "{:.2f}".format(bmp.altitude)
+    pres = f"{bmp.pressure:6.1f}"
+    temp = f"{bmp.temperature:5.2f}"
+    alt = f"{bmp.altitude:.2f}"
     return pres, temp, alt
 
 
 def get_disk():
+    """  """
     fs_stat = os.statvfs('/')
     disk = (fs_stat[0] * fs_stat[2] / 1024 / 1024) # Disk size in MB
     free = (fs_stat[0] * fs_stat[3] / 1024 / 1024) # Free space in MB
@@ -66,9 +60,9 @@ def show_system_stats():
     cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
     cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     mem = get_disk()
-    
+
     text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x75FF33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0xDBFF33)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -77,11 +71,10 @@ def show_system_stats():
 def show_atm_stats():
     """  """
     loc_t = time.localtime()
-    # cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
     cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     pres, temp, alt = get_bmp()
 
-    text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} °C\nAlt.: {alt} m"
+    text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
     text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x75FF33)
     text_area.x = 10
     text_area.y = 10
@@ -90,14 +83,16 @@ def show_atm_stats():
 
 if __name__ == '__main__':
 
-    BUTT_D0 = False
+    BUTT_D0 = True # Screen selector
     BUTT_D1 = False
     BUTT_D2 = False
+    MODE = 0
 
     # Initialize LED
     led = digitalio.DigitalInOut(board.LED)
     led.direction = digitalio.Direction.OUTPUT
 
+    # Initialize buttons
     button_d0 = digitalio.DigitalInOut(board.D0)
     button_d0.switch_to_input(pull=digitalio.Pull.UP)
     button_d1 = digitalio.DigitalInOut(board.D1)
@@ -113,10 +108,14 @@ if __name__ == '__main__':
     # bmp.pressure_oversampling = 8
     # bmp.temperature_oversampling = 2
 
-    # Set RTC and show welcome screen
-    boot_script.set_rtc()
-    boot_script.main()
+    # Show welcome screen
+    soft_boot.main()
 
     while True:
-        # check_buttons()
-        show_atm_stats()
+        check_buttons()
+
+        if MODE == 0:
+            show_atm_stats()
+
+        elif MODE == 1:
+            show_system_stats()
