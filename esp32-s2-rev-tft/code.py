@@ -90,7 +90,7 @@ def show_gps_stats():
 
     STEP += 1
     text = ""
-    
+
     gps.update()
 
     if not gps.has_fix:
@@ -103,7 +103,6 @@ def show_gps_stats():
         # We have a fix! (gps.has_fix is true)
         # Print out details about the fix like location, date, etc.
         print('=' * 40)  # Print a separator line.
-        # print(f'Timestamp: {gps.timestamp_utc}')
         print('Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}'.format(
                 gps.timestamp_utc.tm_mon,   # Grab parts of the time from the
                 gps.timestamp_utc.tm_mday,  # struct_time object that holds
@@ -111,30 +110,34 @@ def show_gps_stats():
                 gps.timestamp_utc.tm_hour,  # not get all data like year, day,
                 gps.timestamp_utc.tm_min,   # month!
                 gps.timestamp_utc.tm_sec))
-        print('Latitude: {} degrees'.format(gps.latitude))
-        print('Longitude: {} degrees'.format(gps.longitude))
-        print('Fix quality: {}'.format(gps.fix_quality))
+        print(f'Latitude: {gps.latitude} degrees')
+        print(f'Longitude: {gps.longitude} degrees')
+        print(f'Fix quality: {gps.fix_quality}')
+        print(f'Fix quality (3D): {gps.fix_quality_3d}')
 
         if gps.satellites is not None:
             print(f'# satellites: {gps.satellites}')
         if gps.altitude_m is not None:
             print(f'Altitude: {gps.altitude_m} meters')
-        if gps.track_angle_deg is not None:
+        if gps.speed_knots is not None:
             print(f'Speed: {gps.speed_knots} knots')
-        if gps.track_angle_deg is not None:
-            print(f'Track angle: {gps.track_angle_deg} degrees')
-        if gps.horizontal_dilution is not None:
-            print(f'Horizontal dilution: {gps.horizontal_dilution}')
-        if gps.height_geoid is not None:
-            print(f"Height geoid: {gps.height_geoid} meters")
+        # if gps.track_angle_deg is not None:
+        #     print(f'Track angle: {gps.track_angle_deg} degrees')
+        # if gps.horizontal_dilution is not None:
+        #     print(f'Horizontal dilution: {gps.horizontal_dilution}')
+        # if gps.height_geoid is not None:
+        #     print(f"Height geoid: {gps.height_geoid} meters")
         time.sleep(0.8)
 
         # Set text
-        latitude = f"Lat.: {gps.latitude_degrees}'{gps.latitude_minutes}''"
-        longitude = f"Long.: {gps.longitude_degrees}'{gps.longitude_minutes}''"
-        text = f"GPS quality: {gps.fix_quality_3d}D\n{latitude}\n{longitude}\nAlt.: {gps.altitude_m} m"
+        status =  f"Quality: {gps.satellites}/12"
+        lat_m = f"{gps.latitude_minutes:07.4f}".replace(".","")
+        long_m = f"{gps.longitude_minutes:07.4f}".replace(".","")
+        latitude = f"Lat.:  {gps.latitude_degrees}.{lat_m}"
+        longitude = f"Long.: {gps.longitude_degrees}.{long_m}"
+        text = f"{status}\n{latitude}\n{longitude}\nAlt.: {gps.altitude_m} m"
         #Lat.: {gps.latitude}\nLong.: {gps.longitude}\nAlt.: {gps.altitude_m} m"
-    
+
     text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0xFFBD33)
     text_area.x = 10
     text_area.y = 10
@@ -178,12 +181,15 @@ if __name__ == '__main__':
 
     # Create a serial connection for the GPS connection using default speed and
     # a slightly higher timeout (GPS modules typically update once a second).
-    uart = busio.UART(TX, RX, baudrate=9600, timeout=2)
+    uart = busio.UART(TX, RX, baudrate=9600, timeout=3)
     gps = adafruit_gps.GPS(uart)
-    # Turn on the basic GGA and RMC info (what you typically want)
-    gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
-    # Set update rate to once a second (1hz) which is what you typically want.
-    gps.send_command(b'PMTK220,1000')
+
+    if not gps.has_fix:
+        print("Set GPS module...")
+        # Turn on the basic GGA and RMC info (what you typically want)
+        gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        # Set update rate to once a second (1hz) which is what you typically want.
+        gps.send_command(b'PMTK220,1000')
 
     # Show welcome screen
     soft_boot.main()
@@ -192,7 +198,6 @@ if __name__ == '__main__':
         check_buttons()
 
         if MODE == 0:
-            pass
             #show_atm_stats()
             show_gps_stats()
             #gps.update()
