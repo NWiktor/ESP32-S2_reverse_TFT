@@ -36,21 +36,20 @@ def check_buttons():
         MODE += 1
         time.sleep(0.5)
 
-    if MODE >= 2:
+    if MODE >= 3:
         MODE = 0
 
 
 def get_bmp():
     """ Get data from BMP sensor. """
-    pass
-    # pres = f"{bmp.pressure:6.1f}"
-    # temp = f"{bmp.temperature:5.2f}"
-    # alt = f"{bmp.altitude:.2f}"
-    # return pres, temp, alt
+    pres = f"{bmp.pressure:6.1f}"
+    temp = f"{bmp.temperature:5.2f}"
+    alt = f"{bmp.altitude:.2f}"
+    return pres, temp, alt
 
 
 def get_disk():
-    """  """
+    """ Get data from storage. """
     fs_stat = os.statvfs('/')
     disk = (fs_stat[0] * fs_stat[2] / 1024 / 1024) # Disk size in MB
     free = (fs_stat[0] * fs_stat[3] / 1024 / 1024) # Free space in MB
@@ -164,11 +163,15 @@ if __name__ == '__main__':
     button_d2 = digitalio.DigitalInOut(board.D2)
     button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
 
+    gnd_pin = digitalio.DigitalInOut(board.A1)
+    gnd_pin.switch_to_input(pull=digitalio.Pull.DOWN)
+    time.sleep(1)
+
     # BMP sensor
-    # i2c = board.I2C()
-    # bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
-    # print("Set sea level pressure.")
-    # bmp.sea_level_pressure = 1013.25
+    i2c = board.I2C()
+    bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
+    print("Set sea level pressure.")
+    bmp.sea_level_pressure = 1013.25
     # bmp.pressure_oversampling = 8
     # bmp.temperature_oversampling = 2
 
@@ -198,9 +201,10 @@ if __name__ == '__main__':
         check_buttons()
 
         if MODE == 0:
-            #show_atm_stats()
             show_gps_stats()
-            #gps.update()
 
         elif MODE == 1:
+            show_atm_stats()
+
+        elif MODE == 2:
             show_system_stats()
