@@ -28,9 +28,6 @@ import soft_boot
 def check_buttons():
     """  """
     global MODE
-    # print(button_d0.value)
-    # print(button_d1.value)
-    # print(button_d2.value)
 
     if button_d0.value != BUTT_D0:
         MODE += 1
@@ -135,7 +132,6 @@ def show_gps_stats():
         latitude = f"Lat.:  {gps.latitude_degrees}.{lat_m}"
         longitude = f"Long.: {gps.longitude_degrees}.{long_m}"
         text = f"{status}\n{latitude}\n{longitude}\nAlt.: {gps.altitude_m} m"
-        #Lat.: {gps.latitude}\nLong.: {gps.longitude}\nAlt.: {gps.altitude_m} m"
 
     text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0xFFBD33)
     text_area.x = 10
@@ -184,15 +180,47 @@ if __name__ == '__main__':
 
     # Create a serial connection for the GPS connection using default speed and
     # a slightly higher timeout (GPS modules typically update once a second).
-    uart = busio.UART(TX, RX, baudrate=9600, timeout=3)
-    gps = adafruit_gps.GPS(uart)
+    uart = busio.UART(TX, RX, baudrate=9600, timeout=2)
+    gps = adafruit_gps.GPS(uart)#, debug=True)
+    time.sleep(2)
+    gps.update()
+    gps.update()
+    print(gps.has_fix)
 
-    if not gps.has_fix:
+
+    # Move to boot.py
+    if True: #not gps.has_fix:
         print("Set GPS module...")
-        # Turn on the basic GGA and RMC info (what you typically want)
-        gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+
+        # Turn off everything
+        # gps.send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        # print(uart.readline())
+        # print(uart.readline())
+        # print(uart.readline())
+        # time.sleep(1)
+        # print("Query firmware version...")
+        # gps.send_command(b'PMTK605') # Query firmware
+        # print(uart.readline()) # b'$PMTK705,AXN_2.31_3339_13101700,5632,PA6H,1.0*6B\r\n'
+        # time.sleep(1)
+        # gps.send_command(b'PMTK886,1')
+        # print(uart.readline())
+        # time.sleep(1)
+        # gps.send_command(b'PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0')
         # Set update rate to once a second (1hz) which is what you typically want.
+        
+        # Turn on the basic GGA and RMC info (what you typically want)
+        print("Turn back GGA and RMC info")
+        gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+        # gps.send_command(b'PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0')
         gps.send_command(b'PMTK220,1000')
+        uart.write(b'PGCMD_ANTENNA\r\n')
+        print(uart.readline())
+        print(uart.readline())
+        print(uart.readline())
+        print(uart.readline())
+
+    # while True:
+    #     print(uart.readline())
 
     # Show welcome screen
     soft_boot.main()
