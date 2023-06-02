@@ -18,7 +18,7 @@ def main():
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
-    time.sleep(10)
+    time.sleep(2)
 
 
 if __name__ == '__main__':
