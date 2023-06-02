@@ -10,9 +10,15 @@ import wifi
 import adafruit_requests
 
 
+def init_gps():
+    """  """
+    pass
+
+
 def set_rtc():
     """ Reads current time from WorldTimeAPI and sets the RTC accordingly. """
     try:
+        time.sleep(0.5)
         print("Connecting to WorldTimeAPI...")
         wifi.radio.connect(secrets["ssid"], secrets["password"])
         print("Connected, getting WorldTimeAPI time...")
@@ -27,11 +33,12 @@ def set_rtc():
         print("URL time: ", response.headers['date'])
 
         # Create time struct and set RTC with it
-        rtc.RTC().datetime = time.localtime( unixtime )
+        rtc.RTC().datetime = time.localtime(unixtime)
 
     except adafruit_requests.OutOfRetries:
         print("OutOfRetries Exception occured! RTC unchanged!")
         print("Please try hard reset!")
+        time.sleep(2)
 
 
 if __name__ == '__main__':
