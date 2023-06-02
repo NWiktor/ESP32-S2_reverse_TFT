@@ -14,6 +14,7 @@ import digitalio
 from adafruit_display_text import bitmap_label
 import adafruit_bmp3xx
 import adafruit_gps
+import adafruit_max1704x
 
 import soft_boot
 
@@ -53,15 +54,21 @@ def get_disk():
     return f"{free:.2f}/{disk:.2f}"
 
 
+def get_battery_stats():
+    """  """
+    return f"{monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%" 
+
+
 def show_system_stats():
     """  """
     loc_t = time.localtime()
     cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
     cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     mem = get_disk()
+    bat = get_battery_stats()
 
-    text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x3375FF)
+    text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB\nBat.: {bat}"
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0x3375FF)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -74,7 +81,7 @@ def show_atm_stats():
     pres, temp, alt = get_bmp()
 
     text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0x75FF33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0x75FF33)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -136,12 +143,15 @@ def show_gps_stats(debug=False):
         latitude = f"Lat.:  {gps.latitude_degrees}.{lat_m}"
         longitude = f"Long.: {gps.longitude_degrees}.{long_m}"
         altitude = f"Alt.: {gps.altitude_m} m"
-        speed = f"Speed: {gps.speed_knots*1.852:.2f} km/h"
+        if gps.speed_knots is not None:
+            speed = f"Speed: {gps.speed_knots*1.852:.2f} km/h"
+        else:
+            speed = "Speed: -"
         text = f"{status}\n{latitude}\n{longitude}\n{altitude}\n{speed}"
 
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0xFFBD33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0xFFBD33)
     text_area.x = 10
-    text_area.y = 0
+    text_area.y = 10
     board.DISPLAY.show(text_area)
 
 
@@ -168,9 +178,14 @@ if __name__ == '__main__':
     button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
     time.sleep(1)
 
+    # Initialize i2C
+    i2c = board.I2C()
+
+    # Battery monitor
+    monitor = adafruit_max1704x.MAX17048(i2c)
+
     # BMP sensor
     print("Initialize BMP pressure sensor.")
-    i2c = board.I2C()
     bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
     print(f"Set sea level pressure to {SEA_LEVEL_PRESSURE} hPa.")
     bmp.sea_level_pressure = SEA_LEVEL_PRESSURE
@@ -231,3 +246,6 @@ if __name__ == '__main__':
 
         elif MODE == 2:
             show_system_stats()
+
+        elif MODE == 3:
+            show_battery_stats()
