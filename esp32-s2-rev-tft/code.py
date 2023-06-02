@@ -136,7 +136,7 @@ def show_gps_stats(debug=False):
         latitude = f"Lat.:  {gps.latitude_degrees}.{lat_m}"
         longitude = f"Long.: {gps.longitude_degrees}.{long_m}"
         altitude = f"Alt.: {gps.altitude_m} m"
-        speed = f"Speed: {gps.speed_knots} kn"
+        speed = f"Speed: {gps.speed_knots*1.852:.2f} km/h"
         text = f"{status}\n{latitude}\n{longitude}\n{altitude}\n{speed}"
 
     text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, color=0xFFBD33)
