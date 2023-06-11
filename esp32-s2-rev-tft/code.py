@@ -24,6 +24,7 @@ import soft_boot
 # 0xFFBD33 - outrageous orange
 # 0xFF5733 - red
 # 0x3375FF - royal blue
+# 0xFF00FF - pink
 
 
 def check_buttons():
@@ -34,7 +35,7 @@ def check_buttons():
         MODE += 1
         time.sleep(0.5)
 
-    if MODE >= 3:
+    if MODE >= 4:
         MODE = 0
 
 
@@ -56,7 +57,7 @@ def get_disk():
 
 def get_battery_stats():
     """  """
-    return f"{monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%" 
+    return f"{monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%"
 
 
 def show_system_stats():
@@ -87,7 +88,32 @@ def show_atm_stats():
     board.DISPLAY.show(text_area)
 
 
-def show_gps_stats(debug=False):
+def show_gps_bmp_stats():
+    """  """
+    # Update data from GPS module
+    gps.update()
+
+    if not gps.has_fix:
+        # Try again if we don't have a fix yet.
+        status = f"Waiting for fix..."
+        altitude = "Alt.: - m (GPS)"
+
+    else:
+        status =  f"Quality: {gps.satellites}/12"
+        altitude = f"Alt.: {gps.altitude_m} m (GPS)"
+
+
+    pres, temp, alt = get_bmp()
+
+    text = f"{status}\n{altitude}\nAlt.: {alt} m\nPres.: {pres} hPa\nTemp.: {temp} C"
+    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0xDBFF33)
+    text_area.x = 10
+    text_area.y = 10
+    board.DISPLAY.show(text_area)
+    time.sleep(0.8)
+
+
+def show_gps_stats():
     """  """
     global STEP
 
@@ -100,42 +126,10 @@ def show_gps_stats(debug=False):
     if not gps.has_fix:
         # Try again if we don't have a fix yet.
         text = f"Waiting for fix...\nElapsed: {STEP} s"
-        if debug:
-            print(f'Waiting for fix... ({STEP})')
-
-        time.sleep(1)
+        time.sleep(0.8)
 
     else:
-        # We have a fix! (gps.has_fix is true)
-        # Print out details about the fix like location, date, etc.
-        if debug:
-            print('=' * 40)  # Print a separator line.
-            print('Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}'.format(
-                    gps.timestamp_utc.tm_mon,   # Grab parts of the time from the
-                    gps.timestamp_utc.tm_mday,  # struct_time object that holds
-                    gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-                    gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-                    gps.timestamp_utc.tm_min,   # month!
-                    gps.timestamp_utc.tm_sec))
-            print(f'Latitude: {gps.latitude} degrees')
-            print(f'Longitude: {gps.longitude} degrees')
-            print(f'Fix quality: {gps.fix_quality}')
-            print(f'Fix quality (3D): {gps.fix_quality_3d}')
-
-            if gps.satellites is not None:
-                print(f'# satellites: {gps.satellites}')
-            if gps.altitude_m is not None:
-                print(f'Altitude: {gps.altitude_m} meters')
-            if gps.speed_knots is not None:
-                print(f'Speed: {gps.speed_knots} knots')
-            if gps.track_angle_deg is not None:
-                print(f'Track angle: {gps.track_angle_deg} degrees')
-            if gps.horizontal_dilution is not None:
-                print(f'Horizontal dilution: {gps.horizontal_dilution}')
-            if gps.height_geoid is not None:
-                print(f"Height geoid: {gps.height_geoid} meters")
-            time.sleep(0.8)
-
+        STEP = 0 # Clear counter
         # Set display text
         status =  f"Quality: {gps.satellites}/12"
         lat_m = f"{gps.latitude_minutes:07.4f}".replace(".","")
@@ -217,7 +211,7 @@ if __name__ == '__main__':
         # print("Query firmware version...")
         # gps.send_command(b'PMTK605') # Query firmware
         # print(uart.readline()) # b'$PMTK705,AXN_2.31_3339_13101700,5632,PA6H,1.0*6B\r\n'
-        
+
         # Turn on the basic GGA and RMC info (what you typically want)
         print("Configure to send GGA and RMC info only.")
         gps.send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
@@ -248,4 +242,4 @@ if __name__ == '__main__':
             show_system_stats()
 
         elif MODE == 3:
-            show_battery_stats()
+            show_gps_bmp_stats()
