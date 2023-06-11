@@ -69,7 +69,8 @@ def show_system_stats():
     bat = get_battery_stats()
 
     text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB\nBat.: {bat}"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0x3375FF)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text,
+        scale=2, line_spacing=1.1, color=0x3375FF)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -82,7 +83,8 @@ def show_atm_stats():
     pres, temp, alt = get_bmp()
 
     text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0x75FF33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text,
+        scale=2, line_spacing=1.1, color=0x75FF33)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -95,7 +97,7 @@ def show_gps_bmp_stats():
 
     if not gps.has_fix:
         # Try again if we don't have a fix yet.
-        status = f"Waiting for fix..."
+        status = "Waiting for fix..."
         altitude = "Alt.: - m (GPS)"
 
     else:
@@ -106,7 +108,8 @@ def show_gps_bmp_stats():
     pres, temp, alt = get_bmp()
 
     text = f"{status}\n{altitude}\nAlt.: {alt} m\nPres.: {pres} hPa\nTemp.: {temp} C"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0xDBFF33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text,
+        scale=2, line_spacing=1.1, color=0xDBFF33)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -143,7 +146,8 @@ def show_gps_stats():
             speed = "Speed: -"
         text = f"{status}\n{latitude}\n{longitude}\n{altitude}\n{speed}"
 
-    text_area = bitmap_label.Label(terminalio.FONT, text=text, scale=2, line_spacing=1.1, color=0xFFBD33)
+    text_area = bitmap_label.Label(terminalio.FONT, text=text,
+        scale=2, line_spacing=1.1, color=0xFFBD33)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
