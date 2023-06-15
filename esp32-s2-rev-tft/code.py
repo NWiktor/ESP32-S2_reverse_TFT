@@ -11,6 +11,7 @@ import board
 import busio
 import terminalio
 import digitalio
+import microcontroller
 from adafruit_display_text import bitmap_label
 import adafruit_bmp3xx
 import adafruit_gps
@@ -28,19 +29,29 @@ import soft_boot
 
 # Set global variables
 MODE = 0
+SCREEN_ON = time.time()
 LAST_FIX_DATE = time.time()
 
 
 def check_buttons():
     """ Check button status (pressed or not) and sets, increments flag accordingly. """
-    global MODE
+    global MODE, SCREEN_ON
 
-    if button_d0.value != BUTT_D0:
+    if button_d0.value != BUTT_D2:
         MODE += 1
+        SCREEN_ON = time.time()
         time.sleep(0.5)
 
     if MODE >= 4:
         MODE = 0
+
+
+def check_screen_ontime_limit(secs=20):
+    """ Check if screen ontime reached a given secundums. """
+    secs_screen_on = int(time.time() - SCREEN_ON)
+    if secs_screen_on >= secs:
+        return True
+    return False
 
 
 def get_bmp():
@@ -62,20 +73,21 @@ def get_disk():
 def show_system_stats():
     """ Show system related data (time, date, memory and battery status). """
     loc_t = time.localtime()
-    cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
-    cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
-    mem = get_disk()
-    bat = f"{monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%"
-    text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB\nBat.: {bat}"
+    cur_date = f"Date: {loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
+    cur_time = f"Time: {loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
+    mem = f"Disk: {get_disk()}"
+    bat = f"Bat.: {monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%"
+    cpu_temp = f"CPU temp.: {microcontroller.cpu.temperature} C"
+    text = f"{cur_date}\n{cur_time}\n{mem} MB\n{bat}\n{cpu_temp}"
     set_display(text, 0x3375FF) # Set display
 
 
 def show_atm_stats():
     """ Show measured atmospheric data. """
     loc_t = time.localtime()
-    cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
+    cur_time = f"Time: {loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     pres, temp, alt = get_bmp()
-    text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
+    text = f"{cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
     set_display(text, 0x75FF33) # Set display
 
 
@@ -123,8 +135,7 @@ def show_gps_stats():
             speed = "Speed: -"
         text = f"{status}\n{latitude}\n{longitude}\n{altitude}\n{speed}"
 
-    # Set display
-    set_display(text, 0xFFBD33)
+    set_display(text, 0xFFBD33) # Set display
 
 
 def set_display(text, color):
@@ -146,8 +157,6 @@ if __name__ == '__main__':
     BUTT_D0 = True # Screen selector
     BUTT_D1 = False
     BUTT_D2 = False
-    # MODE = 0
-    # LAST_FIX_DATE = time.time()
     SEA_LEVEL_PRESSURE = 1013.25
 
     # INITIALIZATIONS
@@ -222,7 +231,11 @@ if __name__ == '__main__':
     # Start main loop
     while True:
         check_buttons()
+        # Check power-saving:
+        if check_screen_ontime_limit(20):
+            print("Entering power-saving mode...")
 
+        # Set modes
         if MODE == 0:
             show_gps_stats()
 
