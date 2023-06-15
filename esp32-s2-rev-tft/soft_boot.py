@@ -10,7 +10,7 @@ from adafruit_display_text import bitmap_label
 
 
 def main():
-    """ Shows system data and hello message for 5 seconds. """
+    """ Shows system data and hello message for 2 seconds. """
     mach_name = os.uname().machine
     sys_name = os.uname().sysname
 
