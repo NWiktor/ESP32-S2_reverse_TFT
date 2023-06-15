@@ -1,6 +1,6 @@
 # Secrets file
 esp32-s2-rev-tft/secrets.py
-
+esp32-s2-rev-tft/settings.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
