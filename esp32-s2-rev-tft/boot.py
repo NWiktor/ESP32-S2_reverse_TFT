@@ -10,16 +10,8 @@ import wifi
 import adafruit_requests
 
 
-def init_gps():
-    """  """
-    # print("Init GPS")
-    pass
-
-
 def set_rtc():
     """ Reads current time from WorldTimeAPI and sets the RTC accordingly. """
-
-    SET_TIME = False
 
     try:
         time.sleep(0.5)
@@ -47,4 +39,3 @@ def set_rtc():
 
 if __name__ == '__main__':
     set_rtc()
-    # init_gps()
