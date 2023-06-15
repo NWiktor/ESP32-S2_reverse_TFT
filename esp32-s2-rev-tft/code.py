@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: 2021 Tim C for Adafruit Industries
-# SPDX-License-Identifier: MIT
 """
-CircuitPython xxxxxxxxxx
+This is the main code.
+Initializes the main loop, and main functions for the device.
 """
 
 # pylint: disable = import-error
+# pylint: disable = no-member
 import os
 import time
 import board
@@ -18,7 +18,7 @@ import adafruit_max1704x
 
 import soft_boot
 
-# Favorite colors
+### Favorite colors
 # 0x75FF33 - lawn green
 # 0xDBFF33 - yellow
 # 0xFFBD33 - outrageous orange
@@ -26,9 +26,13 @@ import soft_boot
 # 0x3375FF - royal blue
 # 0xFF00FF - pink
 
+# Set global variables
+MODE = 0
+LAST_FIX_DATE = time.time()
+
 
 def check_buttons():
-    """  """
+    """ Check button status (pressed or not) and sets, increments flag accordingly. """
     global MODE
 
     if button_d0.value != BUTT_D0:
@@ -48,55 +52,38 @@ def get_bmp():
 
 
 def get_disk():
-    """ Get data from storage. """
+    """ Get avalaiable disk space value. """
     fs_stat = os.statvfs('/')
     disk = (fs_stat[0] * fs_stat[2] / 1024 / 1024) # Disk size in MB
     free = (fs_stat[0] * fs_stat[3] / 1024 / 1024) # Free space in MB
     return f"{free:.2f}/{disk:.2f}"
 
 
-def get_battery_stats():
-    """  """
-    return f"{monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%"
-
-
 def show_system_stats():
-    """  """
+    """ Show system related data (time, date, memory and battery status). """
     loc_t = time.localtime()
     cur_date = f"{loc_t[0]}-{loc_t[1]:02d}-{loc_t[2]:02d}"
     cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     mem = get_disk()
-    bat = get_battery_stats()
-
+    bat = f"{monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%"
     text = f"Date: {cur_date}\nTime: {cur_time}\nDisk: {mem} MB\nBat.: {bat}"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text,
-        scale=2, line_spacing=1.1, color=0x3375FF)
-    text_area.x = 10
-    text_area.y = 10
-    board.DISPLAY.show(text_area)
+    set_display(text, 0x3375FF) # Set display
 
 
 def show_atm_stats():
-    """  """
+    """ Show measured atmospheric data. """
     loc_t = time.localtime()
     cur_time = f"{loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     pres, temp, alt = get_bmp()
-
     text = f"Time: {cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text,
-        scale=2, line_spacing=1.1, color=0x75FF33)
-    text_area.x = 10
-    text_area.y = 10
-    board.DISPLAY.show(text_area)
+    set_display(text, 0x75FF33) # Set display
 
 
 def show_gps_bmp_stats():
-    """  """
-    # Update data from GPS module
-    gps.update()
+    """ Show measured altitude from GPS and pressure sensor simultaneously. """
+    gps.update() # Update data from GPS module
 
-    if not gps.has_fix:
-        # Try again if we don't have a fix yet.
+    if not gps.has_fix: # If we don't have a fix yet.
         status = "Waiting for fix..."
         altitude = "Alt.: - m (GPS)"
 
@@ -104,36 +91,26 @@ def show_gps_bmp_stats():
         status =  f"Quality: {gps.satellites}/12"
         altitude = f"Alt.: {gps.altitude_m} m (GPS)"
 
-
     pres, temp, alt = get_bmp()
-
     text = f"{status}\n{altitude}\nAlt.: {alt} m\nPres.: {pres} hPa\nTemp.: {temp} C"
-    text_area = bitmap_label.Label(terminalio.FONT, text=text,
-        scale=2, line_spacing=1.1, color=0xDBFF33)
-    text_area.x = 10
-    text_area.y = 10
-    board.DISPLAY.show(text_area)
-    time.sleep(0.8)
+    set_display(text, 0xDBFF33) # Set display
 
 
 def show_gps_stats():
-    """  """
-    global STEP
-
-    STEP += 1
+    """ Show GPS coordinates (in decimal degrees), altitude and speed data. """
+    global LAST_FIX_DATE
+    secs_since_fix = 0 # Seconds since last fix
     text = ""
+    gps.update() # Update data from GPS module
 
-    # Update data from GPS module
-    gps.update()
-
-    if not gps.has_fix:
-        # Try again if we don't have a fix yet.
-        text = f"Waiting for fix...\nElapsed: {STEP} s"
+    if not gps.has_fix: # If we don't have a fix yet.
+        secs_since_fix = int(time.time() - LAST_FIX_DATE)
+        text = f"Waiting for fix...\nElapsed: {secs_since_fix} s"
         time.sleep(0.8)
 
     else:
-        STEP = 0 # Clear counter
-        # Set display text
+        LAST_FIX_DATE = time.time()
+        # Format and collect display text
         status =  f"Quality: {gps.satellites}/12"
         lat_m = f"{gps.latitude_minutes:07.4f}".replace(".","")
         long_m = f"{gps.longitude_minutes:07.4f}".replace(".","")
@@ -146,8 +123,14 @@ def show_gps_stats():
             speed = "Speed: -"
         text = f"{status}\n{latitude}\n{longitude}\n{altitude}\n{speed}"
 
+    # Set display
+    set_display(text, 0xFFBD33)
+
+
+def set_display(text, color):
+    """ Set text onto TFT display. """
     text_area = bitmap_label.Label(terminalio.FONT, text=text,
-        scale=2, line_spacing=1.1, color=0xFFBD33)
+        scale=2, line_spacing=1.1, color=color)
     text_area.x = 10
     text_area.y = 10
     board.DISPLAY.show(text_area)
@@ -155,14 +138,21 @@ def show_gps_stats():
 
 if __name__ == '__main__':
 
+    # WELCOME SCREEN
+    # Show welcome screen, and allow Feathers to power up properly
+    soft_boot.main()
+
+    # PARAMETERS
     BUTT_D0 = True # Screen selector
     BUTT_D1 = False
     BUTT_D2 = False
-    MODE = 0
-    STEP = 0
+    # MODE = 0
+    # LAST_FIX_DATE = time.time()
     SEA_LEVEL_PRESSURE = 1013.25
 
+    # INITIALIZATIONS
     print("Start initialization...")
+
     # Initialize LED
     led = digitalio.DigitalInOut(board.LED)
     led.direction = digitalio.Direction.OUTPUT
@@ -176,22 +166,22 @@ if __name__ == '__main__':
     button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
     time.sleep(1)
 
-    # Initialize i2C
+    # Initialize i2c
     i2c = board.I2C()
 
-    # Battery monitor
+    # Initialize battery monitor
     monitor = adafruit_max1704x.MAX17048(i2c)
 
-    # BMP sensor
-    print("Initialize BMP pressure sensor.")
+    # Initialize BMP sensor
+    print("Initialize BMP pressure sensor...")
     bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
     print(f"Set sea level pressure to {SEA_LEVEL_PRESSURE} hPa.")
     bmp.sea_level_pressure = SEA_LEVEL_PRESSURE
     # bmp.pressure_oversampling = 8
     # bmp.temperature_oversampling = 2
 
-    # GPS module
-    print("Initialize GPS module.")
+    # Initialize GPS module
+    print("Initialize GPS module...")
     # Define RX and TX pins for the board's serial port connected to the GPS.
     # These are the defaults you should use for the GPS FeatherWing.
     # For other boards set RX = GPS module TX, and TX = GPS module RX pins.
@@ -206,9 +196,8 @@ if __name__ == '__main__':
     gps.update()
     gps.update()
 
-    # Move to boot.py
-    if gps.has_fix:
-        print("GPS fixed.")
+    if gps.has_fix: # After soft reboot, it is possible to have GPS fix already.
+        print("GPS fix OK!")
 
     else:
         print("Configure GPS module...")
@@ -229,8 +218,6 @@ if __name__ == '__main__':
         gps.send_command(b'PMTK886,1')
         # uart.write(b'PGCMD_ANTENNA\r\n')
 
-    # Show welcome screen
-    soft_boot.main()
 
     # Start main loop
     while True:
