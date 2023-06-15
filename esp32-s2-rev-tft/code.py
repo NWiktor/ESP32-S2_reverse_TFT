@@ -29,29 +29,45 @@ import soft_boot
 
 # Set global variables
 MODE = 0
-SCREEN_ON = time.time()
+LAST_BUTTON_PUSH = time.time()
 LAST_FIX_DATE = time.time()
 
 
 def check_buttons():
     """ Check button status (pressed or not) and sets, increments flag accordingly. """
-    global MODE, SCREEN_ON
+    global MODE, LAST_BUTTON_PUSH
 
+    # Check if D2 button is pushed or not
     if button_d2.value != BUTT_D2:
-        MODE += 1
-        SCREEN_ON = time.time()
+
+        # If display in on, change MODE
+        if get_display_status():
+            MODE += 1
+
+        # Otherwise just update last push time
+        LAST_BUTTON_PUSH = time.time()
         time.sleep(0.5)
 
     if MODE >= 4:
         MODE = 0
 
 
-def check_screen_ontime_limit(secs=20):
-    """ Check if screen ontime reached a given secundums. """
-    secs_screen_on = int(time.time() - SCREEN_ON)
-    if secs_screen_on >= secs:
-        return True
-    return False
+def get_display_status(limit=20):
+    """ Check if screen ontime is reached a given secundums. """
+    secs_screen_on = int(time.time() - LAST_BUTTON_PUSH)
+    if secs_screen_on > limit:
+        return False
+    return True
+
+
+def toggle_display():
+    """ Toggle display on or off. """
+    if get_display_status(20):
+        print("Wake up display!")
+        board.DISPLAY.brightness = 1.0
+    else:
+        print("Entering power-saving mode...")
+        board.DISPLAY.brightness = 0
 
 
 def get_bmp():
@@ -173,8 +189,6 @@ if __name__ == '__main__':
     button_d1.switch_to_input(pull=digitalio.Pull.DOWN)
     button_d2 = digitalio.DigitalInOut(board.D2)
     button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
-    time.sleep(1)
-
     # Initialize i2c
     i2c = board.I2C()
 
@@ -231,9 +245,7 @@ if __name__ == '__main__':
     # Start main loop
     while True:
         check_buttons()
-        # Check power-saving:
-        if check_screen_ontime_limit(20):
-            print("Entering power-saving mode...")
+        toggle_display()
 
         # Set modes
         if MODE == 0:
