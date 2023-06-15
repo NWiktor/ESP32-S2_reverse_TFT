@@ -19,6 +19,7 @@ def main():
     text_area = bitmap_label.Label(terminalio.FONT, text=start_text, scale=1, color=0xFF00FF)
     text_area.x = 10
     text_area.y = 10
+    board.DISPLAY.brightness = 1.0
     board.DISPLAY.show(text_area)
     ####
     time.sleep(2) # Important for powering up Feathers properly!
