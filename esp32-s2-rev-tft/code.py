@@ -37,7 +37,7 @@ def check_buttons():
     """ Check button status (pressed or not) and sets, increments flag accordingly. """
     global MODE, SCREEN_ON
 
-    if button_d0.value != BUTT_D2:
+    if button_d2.value != BUTT_D2:
         MODE += 1
         SCREEN_ON = time.time()
         time.sleep(0.5)
@@ -77,7 +77,7 @@ def show_system_stats():
     cur_time = f"Time: {loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     mem = f"Disk: {get_disk()}"
     bat = f"Bat.: {monitor.cell_voltage:.2f}V / {monitor.cell_percent:.0f}%"
-    cpu_temp = f"CPU temp.: {microcontroller.cpu.temperature} C"
+    cpu_temp = f"CPU temp.: {microcontroller.cpu.temperature:.1f} C"
     text = f"{cur_date}\n{cur_time}\n{mem} MB\n{bat}\n{cpu_temp}"
     set_display(text, 0x3375FF) # Set display
 
