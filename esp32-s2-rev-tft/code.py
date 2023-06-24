@@ -5,6 +5,10 @@ Initializes the main loop, and main functions for the device.
 
 # pylint: disable = import-error
 # pylint: disable = no-member
+# import board
+# import busio
+import sdcardio
+import storage
 import os
 import time
 import board
@@ -154,6 +158,26 @@ def show_gps_stats():
     set_display(text, 0xFFBD33) # Set display
 
 
+def test_sd_card(text=None):
+    """  """
+    if text == None:
+        text = "Hello world!"
+
+    with open("/sd/test.txt", "w") as f:
+        f.write(f"{text}\r\n")
+
+
+def read_sd_card():
+    """  """
+    with open("/sd/test.txt", "r") as f:
+        print("Printing lines in file:")
+        line = f.readline()
+        while line != '':
+            set_display(line, 0xFFBD33) # Set display
+            time.sleep(0.5)
+            line = f.readline()
+
+
 def set_display(text, color):
     """ Set text onto TFT display. """
     text_area = bitmap_label.Label(terminalio.FONT, text=text,
@@ -178,6 +202,23 @@ if __name__ == '__main__':
     # INITIALIZATIONS
     print("Start initialization...")
 
+
+    # Initialize SPI and SD card
+    # Use the board's primary SPI bus
+    spi = board.SPI()
+    # Or, use an SPI bus on specific pins:
+    #spi = busio.SPI(board.SD_SCK, MOSI=board.SD_MOSI, MISO=board.SD_MISO)
+
+    # For breakout boards, you can choose any GPIO pin that's convenient:
+    cs = board.D10
+    # Boards with built in SPI SD card slots will generally have a
+    # pin called SD_CS:
+    #cs = board.SD_CS
+    sdcard = sdcardio.SDCard(spi, cs)
+    vfs = storage.VfsFat(sdcard)
+    storage.mount(vfs, "/sd")
+
+
     # Initialize LED
     led = digitalio.DigitalInOut(board.LED)
     led.direction = digitalio.Direction.OUTPUT
@@ -189,6 +230,7 @@ if __name__ == '__main__':
     button_d1.switch_to_input(pull=digitalio.Pull.DOWN)
     button_d2 = digitalio.DigitalInOut(board.D2)
     button_d2.switch_to_input(pull=digitalio.Pull.DOWN)
+
     # Initialize i2c
     i2c = board.I2C()
 
@@ -245,17 +287,20 @@ if __name__ == '__main__':
     # Start main loop
     while True:
         check_buttons()
-        toggle_display()
+        # toggle_display()
 
         # Set modes
         if MODE == 0:
             show_gps_stats()
 
         elif MODE == 1:
-            show_atm_stats()
+            #test_sd_card()
+            read_sd_card()
+            #show_atm_stats()
 
         elif MODE == 2:
             show_system_stats()
 
         elif MODE == 3:
             show_gps_bmp_stats()
+            test_sd_card(str(LAST_BUTTON_PUSH))
