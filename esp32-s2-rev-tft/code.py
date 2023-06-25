@@ -5,12 +5,10 @@ Initializes the main loop, and main functions for the device.
 
 # pylint: disable = import-error
 # pylint: disable = no-member
-# import board
-# import busio
-import sdcardio
-import storage
 import os
 import time
+import sdcardio
+import storage
 import board
 import busio
 import terminalio
@@ -52,7 +50,7 @@ def check_buttons():
         LAST_BUTTON_PUSH = time.time()
         time.sleep(0.5)
 
-    if MODE >= 4:
+    if MODE >= 5:
         MODE = 0
 
 
@@ -82,6 +80,30 @@ def get_bmp():
     return pres, temp, alt
 
 
+def o2_partial_pressure_hPa(atmospheric_pressure_hPa):
+    """ Get the partial pressure of oxygen in the lungs.
+
+    Oxygen content (20.9%), but the saturated vapour pressure of water (6.3 kPa)
+    is unaltered by altitude.
+    """
+    oxy_pres = 0.209 * (atmospheric_pressure_hPa - 63)
+    return oxy_pres
+
+
+def co2_partial_pressure_hPa(altitude_meter):
+    """ According to Fitzgerald:
+    p_CO2 (torr) = 39.3 - 3.11 * alt (km)
+    """
+    return (39.3 - (3.11*altitude_meter/1000)) * 1.3332236842
+
+
+def get_alveolar_oxygen_pressure(atm_pressure_hPa, altitude_meter):
+    """  """
+    alveolar_pressure = (o2_partial_pressure_hPa(float(atm_pressure_hPa))
+        - (co2_partial_pressure_hPa(float(altitude_meter))/0.74))
+    return f"{alveolar_pressure:.1f} hPa"
+
+
 def get_disk():
     """ Get avalaiable disk space value. """
     fs_stat = os.statvfs('/')
@@ -107,7 +129,8 @@ def show_atm_stats():
     loc_t = time.localtime()
     cur_time = f"Time: {loc_t[3]:02d}:{loc_t[4]:02d}:{loc_t[5]:02d}"
     pres, temp, alt = get_bmp()
-    text = f"{cur_time}\nPres.: {pres} hPa\nTemp.: {temp} C\nAlt.: {alt} m"
+    alv_pres = get_alveolar_oxygen_pressure(pres, alt)
+    text = f"{cur_time}\nPres.: {pres} hPa\npaO2: {alv_pres}\nTemp.: {temp} C\nAlt.: {alt} m"
     set_display(text, 0x75FF33) # Set display
 
 
@@ -160,7 +183,7 @@ def show_gps_stats():
 
 def test_sd_card(text=None):
     """  """
-    if text == None:
+    if text is None:
         text = "Hello world!"
 
     with open("/sd/test.txt", "w") as f:
@@ -294,9 +317,7 @@ if __name__ == '__main__':
             show_gps_stats()
 
         elif MODE == 1:
-            #test_sd_card()
-            read_sd_card()
-            #show_atm_stats()
+            show_atm_stats()
 
         elif MODE == 2:
             show_system_stats()
@@ -304,3 +325,6 @@ if __name__ == '__main__':
         elif MODE == 3:
             show_gps_bmp_stats()
             test_sd_card(str(LAST_BUTTON_PUSH))
+
+        elif MODE == 4:
+            read_sd_card()
